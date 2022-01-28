@@ -10,8 +10,8 @@ class ServerType(Enum):
 
 
 class Menu:
-    parent: Menu
-    sub_menus: Dict[int, Menu]
+    parent: any  # any: Menu
+    sub_menus: Dict[str, any]  # any: Menu
     name: str
 
     def __init__(self, parent, name):
@@ -19,23 +19,41 @@ class Menu:
         self.name = name
 
     def show(self):
+        """
+        Shows Menu Options.
+        E.g.:
+        1. Login
+        2. Signup
+        3. Exit
+        :return:
+        """
         return self
 
     def execute(self):
+        """
+        Handles User Input.
+        :return:
+        """
         return self
 
 
 class MainMenu(Menu):
     def __init__(self, parent):
+        """
+        Inherits Menu Class. Only sub_menus & its actions differ.
+        Leaf nodes have different implementations.
+        :param parent:
+        """
         super().__init__(parent, "")
-        self.sub_menus = {1: ConnectToExternalServerMenu(self),
-                          2: AdminMenu(self),
-                          }
+        self.sub_menus = {
+            '1': ConnectToExternalServerMenu(self),
+            '2': AdminMenu(self)
+        }
 
 
 class ConnectToExternalServerMenu(Menu):
     def __init__(self, parent):
-        super().__init__(parent, "Connect to external servers")
+        super().__init__(parent, "Connect to External Servers")
         self.sub_menus = {
             str(ServerType.STREAMING.value): StreamingMenu(self),
             str(ServerType.CHAT.value): UserMenu(self)}
@@ -45,31 +63,43 @@ class StreamingMenu(Menu):
     def __init__(self, parent):
         super().__init__(parent, "")
         self.sub_menus = {}
-        self.get_video_names()
+        # self.get_video_names()
 
 
 class UserMenu(Menu):
-    pass
+    def __init__(self, parent):
+        super().__init__(parent, "User Menu")
+        self.sub_menus = {}
 
 
 class AdminMenu(Menu):
-    pass
+    def __init__(self, parent):
+        super().__init__(parent, "Admin Menu")
+        self.sub_menus = {}
 
 
 class SignUpMenu(Menu):
-    pass
+    def __init__(self, parent):
+        super().__init__(parent, "Signup Menu")
+        self.sub_menus = {}
 
 
 class LoginMenu(Menu):
-    pass
+    def __init__(self, parent):
+        super().__init__(parent, "Login Menu")
+        self.sub_menus = {}
 
 
 class MailMenu(Menu):
-    pass
+    def __init__(self, parent):
+        super().__init__(parent, "Mail Menu")
+        self.sub_menus = {}
 
 
 class ChatMenu(Menu):
-    pass
+    def __init__(self, parent):
+        super().__init__(parent, "Chat Menu")
+        self.sub_menus = {}
 
 
 class Client:
@@ -77,13 +107,7 @@ class Client:
     firewall: Firewall
 
     def __init__(self):
-        MainMenu().show().execute()
-
-    # def read_client_metadata(self):
-    #     pass
-    #
-    # def save_client_metadata(self):
-    #     pass
+        MainMenu(None).show().execute()
 
 
 client: Client = Client()
