@@ -64,5 +64,8 @@ class ChatServer:
         except Exception as e:
             pass
 
+    def handle_request(self):
+        pass
+
 
 ChatServer().start()
