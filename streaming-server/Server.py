@@ -26,8 +26,10 @@ class MediaServer:
     def __init__(self):
         self.publish = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.publish.bind((URL, SERVER_PORT_INFO))
+        self.publish.listen()
         self.online_delivery = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.online_delivery.bind((URL, SERVER_PORT_INFO))
+        self.online_delivery.listen()
 
     def send_video_names(self, socket_val: socket, addr: str):
         """
@@ -45,7 +47,7 @@ class MediaServer:
         """
         try:
             while (True):
-                self.publish.listen()
+                self.publish.accept()
                 # Gets exception somewhere
         except Exception as e:
             pass

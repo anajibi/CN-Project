@@ -1,5 +1,6 @@
 # Proxy Input Request Port
 import socket
+import threading
 from enum import Enum
 from typing import Dict, Tuple
 
@@ -18,6 +19,13 @@ class SockType(Enum):
     UDP = "UDP"
 
 
+def threaded(fn):
+    def wrapper(*args, **kwargs):
+        threading.Thread(target=fn, args=args, kwargs=kwargs).start()
+
+    return wrapper
+
+
 class ProxyServer:
     chat: socket.socket
     media_tcp: socket.socket
@@ -26,19 +34,41 @@ class ProxyServer:
 
     def __init__(self):
         """
+        Sets 3 sockets. Listens.
         Calls each handle_client & sets it inside forwarding_table.
         """
         # Similar to MediaServer __init__
+        self.accept_chat()
+        self.accept_media_tcp()
+        self.accept_media_udp()
         pass
 
-    def set_chat_socket(self, chat_socket: socket):
+    @threaded
+    def accept_chat(self):
         pass
 
-    def set_media_tcp_socket(self, media_tcp_socket: socket):
+    @threaded
+    def accept_media_tcp(self):
         pass
 
-    def set_media_udp_socket(self, media_udp_socket: socket):
+    @threaded
+    def accept_media_udp(self):
         pass
 
-    def handle_client(self, socket_val: socket):
+    @threaded
+    def handle_chat(self, chat_socket: socket):
+        """
+        Accepts its listen func.
+        :param chat_socket:
+        :return:
+        """
         pass
+
+    @threaded
+    def handle_media_tcp(self, media_tcp_socket: socket):
+        pass
+
+    @threaded
+    def handle_media_udp(self, media_udp_socket: socket):
+        pass
+
