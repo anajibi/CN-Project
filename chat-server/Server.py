@@ -8,7 +8,7 @@ URL = "localhost"
 PROTOCOL (Port 3030):
 
     Request: 
-        { username: "" },
+        { username: "" }, -> { payload: List[ str (username), num (unread_chat_num)] }
         { username: "", messages_num: int }
     
     Response:
@@ -47,7 +47,7 @@ class Inbox:
 
 class ChatServer:
     user: Dict[str, Inbox]
-    online_users: [str, Tuple[str, int]]
+    online_users: Dict[str, Tuple[str, int]]
 
     chat_socket: socket.socket
 
