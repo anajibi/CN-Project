@@ -37,7 +37,8 @@ class Chat:
         :param messages_num:
         :return:
         """
-        pass
+        # TODO: I DONT KNOW HOW TO DO THIS
+        return (self.seen_messages + self.unseen_messages)[-messages_num:]
 
 
 class Inbox:
@@ -88,7 +89,7 @@ class Inbox:
         :param username:
         :return:
         """
-        pass
+        return self.chats_list[username]
 
 
 def threaded(fn):
@@ -160,28 +161,31 @@ class ChatServer:
                 sock.sendall(b"{status: OK}")
                 sock.settimeout(CHAT_TIMEOUT)
                 self.online_users[username] = (sock, contact)
-                self.handle_chat(username, sock)
+                self.handle_chat(username, contact, sock)
 
-    def handle_chat(self, username, sock: socket.socket):
+    def handle_chat(self, username, contact, sock: socket.socket):
         try:
             while (True):
                 data = sock.recv(1024)
                 if not data:
                     break
-                self.handle_chat_message(username, data, sock)
+                self.handle_chat_message(username, contact, data, sock)
         except Exception as e:
             pass
 
-    def handle_chat_message(self, username: str, data, sock: socket.socket):
+    def handle_chat_message(self, username: str, contact, data, sock: socket.socket):
         try:
             message = eval(data.decode())
             if message["command"] == "SEND":
                 self.send(username, message["to"], message["message"], sock)
             elif message["command"] == "MESSAGES":
-                self.messages(message["count"], sock)
+                self.messages(message["count"], username, contact, sock)
         except Exception as e:
             sock.close()
             del self.online_users[username]
+
+    def messages(self, count: int, username: str, contact: str, sock: socket.socket):
+        sock.sendall(self.users_inbox[username].get_chat(contact).load_x_messages(count).encode())
 
     def send(self, username: str, to: str, message: str, sock: socket.socket):
         if self.online_users[username][1] != to:
@@ -195,36 +199,32 @@ class ChatServer:
                 sock.sendall(b"{status: OK}")
             sock.sendall(b"{status: OK}")
 
-
-def login(self, username: str, password: str, sock: socket.socket):
-    if username in self.users:
-        if self.users[username] == password:
-            sock.sendall(b"{status: OK}")
+    def login(self, username: str, password: str, sock: socket.socket):
+        if username in self.users:
+            if self.users[username] == password:
+                sock.sendall(b"{status: OK}")
+            else:
+                sock.sendall(b"{status: WRONG_PASSWORD}")
         else:
-            sock.sendall(b"{status: WRONG_PASSWORD}")
-    else:
-        sock.sendall(b"{status: WRONG_USERNAME}")
+            sock.sendall(b"{status: WRONG_USERNAME}")
 
+    def register(self, username: str, password: str, sock: socket.socket):
+        if username in self.users:
+            sock.sendall(b"{status: USERNAME_TAKEN}")
+        else:
+            self.users[username] = password
+            self.users_inbox[username] = Inbox()
+            sock.sendall(b"{status: OK}")
 
-def register(self, username: str, password: str, sock: socket.socket):
-    if username in self.users:
-        sock.sendall(b"{status: USERNAME_TAKEN}")
-    else:
-        self.users[username] = password
-        self.users_inbox[username] = Inbox()
-        sock.sendall(b"{status: OK}")
+    def inbox(self, username: str, sock: socket.socket):
+        if username in self.users_inbox:
+            self.send_inbox(username, sock)
+        else:
+            sock.sendall(b"{status: UNKNOWN_USER}")
 
-
-def inbox(self, username: str, sock: socket.socket):
-    if username in self.users_inbox:
-        self.send_inbox(username, sock)
-    else:
-        sock.sendall(b"{status: UNKNOWN_USER}")
-
-
-def send_inbox(self, username: str, sock: socket.socket):
-    inbox = self.users_inbox[username]
-    sock.sendall(b"{status: OK, inbox: " + str(inbox.summarize_inbox()).encode() + b"}")
+    def send_inbox(self, username: str, sock: socket.socket):
+        inbox = self.users_inbox[username]
+        sock.sendall(b"{status: OK, inbox: " + str(inbox.summarize_inbox()).encode() + b"}")
 
 
 ChatServer().start()
