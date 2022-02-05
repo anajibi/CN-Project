@@ -37,8 +37,14 @@ class Chat:
         :param messages_num:
         :return:
         """
-        # TODO: I DONT KNOW HOW TO DO THIS
-        return (self.seen_messages + self.unseen_messages)[-messages_num:]
+        if len(self.unseen_messages) > messages_num:
+            messages_to_send = self.unseen_messages[-messages_num:]
+            self.unseen_messages = self.unseen_messages[:-messages_num]
+            self.seen_messages += messages_to_send
+            return messages_to_send
+        else:
+            self.seen_messages += self.unseen_messages
+            return self.seen_messages[-messages_num:]
 
 
 class Inbox:
