@@ -39,8 +39,7 @@ class Firewall:
             self.port_list.remove(port)
         else:
             print("Port not found in port_list")
-    
-    @threaded
+
     def can_go_through(self, port: int):
         """
         Depending on packet, checks firewall conditions based on its type.
@@ -84,7 +83,7 @@ class ControlledSocket(socket):
         :return:
         """
         if ControlledSocket.firewall.can_go_through(self.getsockname()[1]):
-            return super(ControlledSocket, self).recv(bufsize, flags)
+            return super(ControlledSocket, self).recv(bufsize)
         else:
             print("packet dropped due to firewall rules")
             return None
@@ -97,7 +96,7 @@ class ControlledSocket(socket):
         :return:
         """
         if ControlledSocket.firewall.can_go_through(self.getsockname()[1]):
-            return super(ControlledSocket, self).sendall(data, flags)
+            return super(ControlledSocket, self).sendall(data)
         else:
             print("packet dropped due to firewall rules")
             return None
