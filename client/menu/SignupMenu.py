@@ -1,5 +1,4 @@
-from client.Client import tcp_send_data
-from client.menu.Menu import Menu
+from client.menu.Menu import Menu, tcp_send_data
 
 
 class SignUpMenu(Menu):
@@ -41,7 +40,7 @@ class SignUpMenu(Menu):
             'username': self.username,
             'password': self.password
         }
-        response = tcp_send_data(data=data, ip='localhost', port='3030')
+        response = tcp_send_data(data=data, ip='localhost', port=3030)
         return response['status'] == "OK"
 
     def prompt_username(self):

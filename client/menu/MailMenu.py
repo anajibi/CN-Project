@@ -2,9 +2,7 @@ import json
 import re
 import socket
 
-from client.Client import tcp_send_data
-from client.menu.LoginMenu import LoginMenu
-from client.menu.Menu import Menu
+from client.menu.Menu import Menu, tcp_send_data
 
 
 class MailMenu(Menu):
@@ -14,8 +12,8 @@ class MailMenu(Menu):
         super().__init__(parent, "Mail Menu")
 
     def show(self):
-        if not isinstance(self.parent, LoginMenu):
-            exit(1)
+        # if not isinstance(self.parent, LoginMenu):
+        #     exit(1)
         data = {
             "command": "INBOX",
             "username": self.parent.username

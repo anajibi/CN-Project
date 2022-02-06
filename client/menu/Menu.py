@@ -1,7 +1,8 @@
 import json
+import socket
+from enum import Enum
 from typing import Dict
 
-from client.Client import ChatMenu
 
 
 class Menu:
@@ -26,15 +27,15 @@ class Menu:
         3. Exit
         :return:
         """
-        if not isinstance(self, ChatMenu):
-            print(f"0. Back")
+        # if not isinstance(self, ChatMenu):
+        #     print(f"0. Back")
         for k, v in self.sub_menus.items():
             print(f"{k}. {v}")
         return self
 
     def input_valid(self, chosen_menu: str):
-        if isinstance(self, ChatMenu) and chosen_menu == '0':
-            return False
+        # if isinstance(self, ChatMenu) and chosen_menu == '0':
+        #     return False
         if chosen_menu not in self.sub_menus:
             return False
         return True
@@ -67,3 +68,17 @@ class Menu:
 
     def __str__(self):
         return self.name
+
+def tcp_send_data(data: dict, ip, port):
+    data = json.dumps(data)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((ip, port))
+        s.sendall(bytes(data, encoding='utf-8'))
+        message = s.recv(1024).decode('utf-8')
+        response = json.loads(message)
+    return response
+
+class ServerType(Enum):
+    STREAMING = "choghondar"
+    CHAT = "shalgham"
+

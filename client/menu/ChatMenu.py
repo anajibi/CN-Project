@@ -1,4 +1,4 @@
-from client.Client import ExitMenu
+from client.menu.ExitMenu import ExitMenu
 from client.menu.LoginMenu import LoginMenu
 from client.menu.Menu import Menu
 from client.menu.SignupMenu import SignUpMenu

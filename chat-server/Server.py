@@ -40,13 +40,17 @@ def message_to_str(messages: List[Tuple[Union[str, None], str]]):
         if message[0] is None:
             result.append(f'you: {message[1]}')
         else:
-            result.append(f"{message[0]: {message[1]}}")
+            result.append(f"{message[0]}: {message[1]}")
     return result
 
 
 class Chat:
     seen_messages: List[Tuple[Union[str, None], str]]
     unseen_messages: List[Tuple[str, str]]
+
+    def __init__(self):
+        self.seen_messages = []
+        self.unseen_messages = []
 
     def load_x_messages(self, messages_num: int):
         """
@@ -62,6 +66,7 @@ class Chat:
             return message_to_str(messages_to_send)
         else:
             self.seen_messages += self.unseen_messages
+            self.unseen_messages = []
             return message_to_str(self.seen_messages[-messages_num:])
 
 
@@ -146,6 +151,7 @@ class ChatServer:
     def __init__(self):
         self.chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.chat_socket.bind((URL, SERVER_PORT_INFO))
+        print(f'Chat server started on {URL}:{SERVER_PORT_INFO}')
         self.chat_socket.listen()
         self.users = {}
         self.online_users = {}
@@ -186,10 +192,14 @@ class ChatServer:
                 self.inbox(message["username"], sock)
             elif message["command"] == "CHAT":
                 self.chat(message["username"], message["contact"], sock)
-
+            else:
+                data = {
+                    "status": "INTERNAL_SERVER_ERROR",
+                }
+                send_data(data, sock)
         except Exception as e:
             data = {
-                "status": "UNKNOWN_COMMAND"
+                "status": "INTERNAL_SERVER_ERROR",
             }
             send_data(data, sock)
 
@@ -246,7 +256,7 @@ class ChatServer:
             }
             send_data(data, sock)
         else:
-            self.users_inbox[username].add_read_message(to, message)
+            self.users_inbox[username].add_self_message(to, message)
             if to in self.online_users and self.get_user_contact(to) == username:
                 data = {
                     "command": "RECEIVE",
@@ -287,9 +297,9 @@ class ChatServer:
                 "status": "USERNAME_TAKEN"
             }
         else:
-            self.users[username] = password
             self.add_user_to_other_inboxes(username)
-            self.users_inbox[username] = Inbox()
+            self.add_other_inboxes_to_user(username)
+            self.users[username] = password
             data = {
                 "status": "OK"
             }
@@ -325,6 +335,12 @@ class ChatServer:
                 "status": "OK"
             }
         send_data(data, sock)
+
+    def add_other_inboxes_to_user(self, username):
+        inbox = Inbox()
+        for user in self.users.keys():
+            inbox.add_chat(user)
+        self.users_inbox[username] = inbox
 
 
 ChatServer().start()

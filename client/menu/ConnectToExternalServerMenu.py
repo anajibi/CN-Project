@@ -1,5 +1,6 @@
-from client.Client import ServerType, StreamingMenu, ChatMenu
-from client.menu.Menu import Menu
+from client.menu.ChatMenu import ChatMenu
+from client.menu.Menu import Menu, ServerType
+from client.menu.StreamingMenu import StreamingMenu
 
 
 class ConnectToExternalServerMenu(Menu):

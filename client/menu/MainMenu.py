@@ -1,4 +1,4 @@
-from client.Client import AdminMenu
+from client.menu.AdminMenu import AdminMenu
 from client.menu.ConnectToExternalServerMenu import ConnectToExternalServerMenu
 from client.menu.Menu import Menu
 
