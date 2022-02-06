@@ -11,21 +11,27 @@ class ServerType(Enum):
     CHAT = "shalgham"
 
 
+def tcp_send_data(data: dict, ip, port):
+    data = json.dumps(data)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((ip, port))
+        s.sendall(bytes(data, encoding='utf-8'))
+        message = s.recv(1024).decode('utf-8')
+        response = json.loads(message)
+    return response
+
+
 class Menu:
     parent: any  # any: Menu
     sub_menus: Dict[str, any]  # any: Menu
     name: str
-    is_leaf: bool
 
-    def __init__(self, parent, name, is_leaf=False):
+    def __init__(self, parent, name):
         self.parent = parent
         self.name = name
-        self.is_leaf = is_leaf
         self.sub_menus = {}
 
     def run(self):
-        if self.is_leaf:
-            return
         return self.show().execute()
 
     def show(self):
@@ -62,7 +68,7 @@ class Menu:
         :return:
         """
         chosen_menu = input()
-        if self.input_valid(chosen_menu):
+        if not self.input_valid(chosen_menu):
             return self.retry()
         if chosen_menu == '0':
             next_menu = self.get_parent()
@@ -75,6 +81,9 @@ class Menu:
     def retry(self):
         print("Bad input. Try again.")
         return self.run()
+
+    def udp_send_data(self, data: dict):
+        data = json.dumps(data)
 
     def __str__(self):
         return self.name
@@ -105,11 +114,8 @@ class ConnectToExternalServerMenu(Menu):
 class StreamingMenu(Menu):
     def __init__(self, parent):
         print("Welcome to Choghondar.")
-        super().__init__(parent, "Streaming Menu", is_leaf=True)
+        super().__init__(parent, "Streaming Menu")
         # self.get_video_names()
-
-    def show(self):
-        print()
 
 
 class ChatMenu(Menu):
@@ -131,38 +137,46 @@ class AdminMenu(Menu):
 
 
 class SignUpMenu(Menu):
-
     username: str
     password: str
 
     def __init__(self, parent):
-        super().__init__(parent, "Signup", is_leaf=True)
+        super().__init__(parent, "Signup")
+
+    def show(self):
         self.username = ""
         self.password = ""
+        return self
+
+    def execute(self):
         self.sign_up_procedure()
+        self.parent.run()
+        return self
 
     def sign_up_procedure(self):
         self.prompt_username()
         self.prompt_password()
         self.send_user_pass_to_server()
 
-    def is_username_in_server(self):
-        message = {
+    def is_username_new(self):
+        data = {
             'command': 'GET_USER',
             'username': self.username
         }
-        data = json.dumps(message)
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect(('localhost', 3030))
-            s.sendall(bytes(data, encoding='utf-8'))
-            response = (s.recv(1024).decode('utf-8'))
-        print(response)
+        response = tcp_send_data(data=data, ip='localhost', port=3030)
+        return response['status'] == "OK"  # Todo: Enum
 
     def is_username_bad(self):
-        return self.is_username_in_server() or self.username == '0'
+        return (not self.is_username_new()) or self.username == '0'
 
     def send_user_pass_to_server(self):
-        pass
+        data = {
+            'command': 'REGISTER',
+            'username': self.username,
+            'password': self.password
+        }
+        response = tcp_send_data(data=data, ip='localhost', port='3030')
+        return response == "OK"
 
     def prompt_username(self):
         print("Please enter your username.")
@@ -181,13 +195,13 @@ class SignUpMenu(Menu):
 
 class LoginMenu(Menu):
     def __init__(self, parent):
-        super().__init__(parent, "Login", is_leaf=True)
+        super().__init__(parent, "Login")
         self.sub_menus = {}
 
 
 class ExitMenu(Menu):
     def __init__(self, parent):
-        super().__init__(parent, "Exit", is_leaf=True)
+        super().__init__(parent, "Exit")
 
 
 class MailMenu(Menu):
@@ -201,7 +215,8 @@ class Client:
     firewall: Firewall
 
     def __init__(self):
-        MainMenu(None).run()
+        # MainMenu(None).run()
+        ChatMenu(None).run()
 
 
 client: Client = Client()
