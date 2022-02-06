@@ -2,6 +2,7 @@ import json
 import re
 import socket
 
+from client.Firewall import ControlledSocket
 from client.menu.Menu import Menu, tcp_send_data
 
 
@@ -43,7 +44,7 @@ class MailMenu(Menu):
             "contact": contact
         }
         data = json.dumps(data)
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        with ControlledSocket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect(('localhost', self.get_chat_port()))
             s.sendall(bytes(data, encoding='utf-8'))
             message = s.recv(1024).decode('utf-8')

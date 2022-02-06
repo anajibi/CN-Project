@@ -3,7 +3,17 @@ import socket
 from enum import Enum
 from typing import Dict
 
-from client.Firewall import Firewall
+from client.Firewall import Firewall, ControlledSocket
+
+
+def tcp_send_data(data: dict, ip, port):
+    data = json.dumps(data)
+    with ControlledSocket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((ip, port))
+        s.sendall(bytes(data, encoding='utf-8'))
+        message = s.recv(1024).decode('utf-8')
+        response = json.loads(message)
+    return response
 
 
 class Menu:
@@ -89,16 +99,6 @@ class Menu:
 
     def __str__(self):
         return self.name
-
-
-def tcp_send_data(data: dict, ip, port):
-    data = json.dumps(data)
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((ip, port))
-        s.sendall(bytes(data, encoding='utf-8'))
-        message = s.recv(1024).decode('utf-8')
-        response = json.loads(message)
-    return response
 
 
 class ServerType(Enum):

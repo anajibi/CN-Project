@@ -1,6 +1,6 @@
 from enum import Enum
 from socket import socket
-from typing import List
+from typing import List, Union
 
 
 class FirewallType(Enum):
@@ -38,7 +38,7 @@ class Firewall:
     def can_go_through(self, port: int):
         """
         Depending on packet, checks firewall conditions based on its type.
-        :param packet:
+        :param port:
         :return:
         """
 
@@ -70,7 +70,7 @@ class ControlledSocket(socket):
             print("packet dropped due to firewall rules")
             return -1
 
-    def recv(self, bufsize: int, flags: int = ...) -> bytes:
+    def recv(self, bufsize: int, flags: int = ...) -> Union[bytes, None]:
         """
         Use this function to check whether firewall should be used.
         :param bufsize:
@@ -94,6 +94,4 @@ class ControlledSocket(socket):
             return super(ControlledSocket, self).sendall(data, flags)
         else:
             print("packet dropped due to firewall rules")
-            return -1
-
-
+            return None

@@ -1,6 +1,6 @@
 import re
 
-from client.Firewall import Firewall, FirewallType
+from client.Firewall import Firewall, FirewallType, ControlledSocket
 from client.menu.Menu import Menu
 
 
@@ -31,15 +31,15 @@ class AdminMenu(Menu):
         while True:
             command = input()
             if command == 'activate whitelist firewall':
-                self.firewall = Firewall(FirewallType.WHITE_LIST)
+                ControlledSocket.firewall = Firewall(FirewallType.WHITE_LIST)
             elif command == 'activate blacklist firewall':
-                self.firewall = Firewall(FirewallType.BLACK_LIST)
+                ControlledSocket.firewall = Firewall(FirewallType.BLACK_LIST)
             elif regexp := re.match(r"open port (\d+)", command):
                 port = int(regexp.group(1))
-                self.firewall.add_port(port)
+                ControlledSocket.firewall.add_port(port)
             elif regexp := re.match(r"close port (\d+)", command):
                 port = int(regexp.group(1))
-                self.firewall.del_port(port)
+                ControlledSocket.firewall.del_port(port)
             elif command == '0':
                 break
             else:
