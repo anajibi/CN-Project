@@ -67,14 +67,17 @@ class MailMenu(Menu):
                     break
                 if regexp := re.match(r"/load (\d+)", pm):
                     count = int(regexp.group(1))
-                    print(self.get_messages(count, s))
-            data = {
-                "command": "SEND",
-                "to": contact,
-                "message": pm
-            }
-            data = json.dumps(data)
-            s.sendall(bytes(data, encoding='utf-8'))
+                    data = self.get_messages(count, s)
+                    print(data)
+            else:
+                data = {
+                    "command": "SEND",
+                    "to": contact,
+                    "message": pm
+                }
+                data = json.dumps(data)
+                s.sendall(bytes(data, encoding='utf-8'))
+                s.recv(1024)
 
     @staticmethod
     def get_messages(count: int, s: socket.socket):
