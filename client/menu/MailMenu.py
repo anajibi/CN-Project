@@ -44,7 +44,7 @@ class MailMenu(Menu):
         }
         data = json.dumps(data)
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect(('localhost', 3030))
+            s.connect(('localhost', self.get_chat_port()))
             s.sendall(bytes(data, encoding='utf-8'))
             message = s.recv(1024).decode('utf-8')
             response = json.loads(message)

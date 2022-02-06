@@ -28,7 +28,7 @@ class SignupMenu(Menu):
             'command': 'GET_USER',
             'username': self.username
         }
-        response = tcp_send_data(data=data, ip='localhost', port=3030)
+        response = tcp_send_data(data=data, ip='localhost', port=self.get_chat_port())
         return response['status'] == "OK"  # Todo: Enum
 
     def is_username_bad(self):
@@ -40,7 +40,7 @@ class SignupMenu(Menu):
             'username': self.username,
             'password': self.password
         }
-        response = tcp_send_data(data=data, ip='localhost', port=3030)
+        response = tcp_send_data(data=data, ip='localhost', port=self.get_chat_port())
         return response['status'] == "OK"
 
     def prompt_username(self):
