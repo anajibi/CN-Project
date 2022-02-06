@@ -20,3 +20,6 @@ class ConnectToExternalServerMenu(Menu):
                 StreamingMenu(self).run()
             elif regexp := re.match(r"shalgham(?: via (\d+))?", command):
                 self.proxy_port = int(regexp.group(1))
+                ChatMenu(self).run()
+            elif command == 0:
+                self.parent.run()
