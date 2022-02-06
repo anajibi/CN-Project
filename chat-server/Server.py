@@ -1,7 +1,7 @@
 import json
 import socket
 import threading
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple, Set, Union
 
 CHAT_TIMEOUT = 2 * 60  # 2 minutes
 SERVER_PORT_INFO = 3030
@@ -34,9 +34,19 @@ def send_data(data: dict, sock: socket):
     sock.sendall(bytes(json_data, encoding='utf-8'))
 
 
+def message_to_str(messages: List[Tuple[Union[str, None], str]]):
+    result = []
+    for message in messages:
+        if message[0] is None:
+            result.append(f'you: {message[1]}')
+        else:
+            result.append(f"{message[0]: {message[1]}}")
+    return result
+
+
 class Chat:
-    seen_messages: List[str]
-    unseen_messages: List[str]
+    seen_messages: List[Tuple[Union[str, None], str]]
+    unseen_messages: List[Tuple[str, str]]
 
     def load_x_messages(self, messages_num: int):
         """
@@ -48,10 +58,11 @@ class Chat:
             messages_to_send = self.unseen_messages[-messages_num:]
             self.unseen_messages = self.unseen_messages[:-messages_num]
             self.seen_messages += messages_to_send
-            return messages_to_send
+
+            return message_to_str(messages_to_send)
         else:
             self.seen_messages += self.unseen_messages
-            return self.seen_messages[-messages_num:]
+            return message_to_str(self.seen_messages[-messages_num:])
 
 
 class Inbox:
@@ -82,10 +93,10 @@ class Inbox:
         self.chats_order.remove(username)
         self.chats_order.append(username)
         if username in self.chats_list:
-            self.chats_list[username].unseen_messages.append(message)
+            self.chats_list[username].unseen_messages.append((username, message))
         else:
             self.chats_list[username] = Chat()
-            self.chats_list[username].unseen_messages.append(message)
+            self.chats_list[username].unseen_messages.append((username, message))
 
     def add_read_message(self, username: str, message: str):
         """
@@ -94,7 +105,7 @@ class Inbox:
         :param username:
         :return:
         """
-        self.chats_list[username].seen_messages.append(message)
+        self.chats_list[username].seen_messages.append((username, message))
 
     def get_chat(self, username: str) -> Chat:
         """
@@ -107,6 +118,9 @@ class Inbox:
     def add_chat(self, username: str):
         self.chats_list[username] = Chat()
         self.chats_order.append(username)
+
+    def add_self_message(self, username: str, message: str):
+        self.chats_list[username].seen_messages.append((None, message))
 
 
 def threaded(fn):
@@ -222,7 +236,7 @@ class ChatServer:
             del self.online_users[username]
 
     def messages(self, count: int, username: str, contact: str, sock: socket.socket):
-        sock.sendall(self.users_inbox[username].get_chat(contact).load_x_messages(count).encode())
+        sock.sendall(str(self.users_inbox[username].get_chat(contact).load_x_messages(count)).encode())
 
     def send(self, username: str, to: str, message: str, sock: socket.socket):
 
@@ -232,6 +246,7 @@ class ChatServer:
             }
             send_data(data, sock)
         else:
+            self.users_inbox[username].add_read_message(to, message)
             if to in self.online_users and self.get_user_contact(to) == username:
                 data = {
                     "command": "RECEIVE",
