@@ -22,12 +22,13 @@ PROTOCOL (Port 4030):
         UDP: ByteStream
 """
 
+
 class MediaServer:
     # media: Dict[str, str]
     media = {
-        'behdad babaei' : '1.mp4',
-        'hossein alizade' : '2.mp4',
-        'keyhan kalhor' : '3.mp4'
+        'behdad babaei': '1.mp4',
+        'hossein alizade': '2.mp4',
+        'keyhan kalhor': '3.mp4'
     }
 
     publish: socket.socket
@@ -59,7 +60,6 @@ class MediaServer:
                 vid.release()
                 cv2.destroyAllWindows()
 
-
     def media_list(self):
         list = ''
         for item in self.media.keys():
@@ -78,7 +78,7 @@ class MediaServer:
         while True:
             conn, addr = self.online_delivery.accept()
             print('online delivery connection : {addr}')
-            threading.Thread(target=self.send_stream, args=(conn, )).start()
+            threading.Thread(target=self.send_stream, args=(conn,)).start()
 
     def start(self):
         """
@@ -87,5 +87,6 @@ class MediaServer:
         """
         threading.Thread(target=self.acc_publish, args=()).start()
         threading.Thread(target=self.acc_online_delivery, args=()).start()
+
 
 MediaServer().start()
