@@ -1,12 +1,17 @@
 from enum import Enum
 from socket import socket
 from typing import List, Union
-
+import threading
 
 class FirewallType(Enum):
     BLACK_LIST = "BLACK_LIST"
     WHITE_LIST = "WHITE_LIST"
 
+def threaded(fn):
+    def wrapper(*args, **kwargs):
+        threading.Thread(target=fn, args=args, kwargs=kwargs).start()
+
+    return wrapper
 
 class Firewall:
     type: FirewallType
@@ -34,7 +39,8 @@ class Firewall:
             self.port_list.remove(port)
         else:
             print("Port not found in port_list")
-
+    
+    @threaded
     def can_go_through(self, port: int):
         """
         Depending on packet, checks firewall conditions based on its type.

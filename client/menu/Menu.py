@@ -3,7 +3,7 @@ import socket
 from enum import Enum
 from typing import Dict
 
-from client.Firewall import Firewall, ControlledSocket
+from Firewall import Firewall, ControlledSocket
 
 
 def tcp_send_data(data: dict, ip, port):

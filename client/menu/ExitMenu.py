@@ -1,4 +1,4 @@
-from client.menu.Menu import Menu
+from menu.Menu import Menu
 
 
 class ExitMenu(Menu):

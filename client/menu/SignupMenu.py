@@ -1,4 +1,4 @@
-from client.menu.Menu import Menu, tcp_send_data
+from menu.Menu import Menu, tcp_send_data
 
 
 class SignupMenu(Menu):

@@ -1,7 +1,7 @@
 import re
 
-from client.Firewall import Firewall, FirewallType, ControlledSocket
-from client.menu.Menu import Menu
+from Firewall import Firewall, FirewallType, ControlledSocket
+from menu.Menu import Menu
 
 
 class AdminMenu(Menu):

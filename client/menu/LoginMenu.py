@@ -1,5 +1,5 @@
-from client.menu.MailMenu import MailMenu
-from client.menu.Menu import Menu, tcp_send_data
+from menu.MailMenu import MailMenu
+from menu.Menu import Menu, tcp_send_data
 
 
 class LoginMenu(Menu):

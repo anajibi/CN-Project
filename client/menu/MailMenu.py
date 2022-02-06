@@ -2,8 +2,8 @@ import json
 import re
 import socket
 
-from client.Firewall import ControlledSocket
-from client.menu.Menu import Menu, tcp_send_data
+from Firewall import ControlledSocket
+from menu.Menu import Menu, tcp_send_data
 
 
 class MailMenu(Menu):

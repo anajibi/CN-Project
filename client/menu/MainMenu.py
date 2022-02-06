@@ -1,6 +1,6 @@
-from client.menu.AdminMenu import AdminMenu
-from client.menu.ConnectToExternalServerMenu import ConnectToExternalServerMenu
-from client.menu.Menu import Menu
+from menu.AdminMenu import AdminMenu
+from menu.ConnectToExternalServerMenu import ConnectToExternalServerMenu
+from menu.Menu import Menu
 
 
 class MainMenu(Menu):

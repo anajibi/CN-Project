@@ -2,10 +2,10 @@ from enum import Enum
 import json
 import socket
 
-from client.Firewall import Firewall
-from client.menu.ChatMenu import ChatMenu
-from client.menu.MainMenu import MainMenu
+from Firewall import Firewall, FirewallType, ControlledSocket
+from menu.MainMenu import MainMenu
 
+ControlledSocket.firewall = Firewall(FirewallType.BLACK_LIST)
 
 def udp_send_data(data: dict):
     data = json.dumps(data)
