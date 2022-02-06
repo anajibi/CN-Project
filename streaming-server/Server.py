@@ -21,6 +21,7 @@ PROTOCOL (Port 4030):
         UDP: ByteStream
 """
 
+
 class MediaServer:
     # media: Dict[str, str]
     media = {
@@ -115,7 +116,6 @@ class MediaServer:
                     executor.submit(self.video_stream, client_addr, FPS, q)
                     executor.submit(self.audio_stream, name, conn)
 
-
     def media_list(self):
         list = ''
         for item in self.media.keys():
@@ -145,5 +145,6 @@ class MediaServer:
         """
         threading.Thread(target=self.acc_publish, args=()).start()
         threading.Thread(target=self.acc_online_delivery, args=()).start()
+
 
 MediaServer().start()

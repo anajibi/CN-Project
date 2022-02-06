@@ -1,6 +1,7 @@
+import json
 import socket
 import threading
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple, Set, Union
 
 CHAT_TIMEOUT = 2 * 60  # 2 minutes
 SERVER_PORT_INFO = 3030
@@ -28,9 +29,28 @@ PROTOCOL (Port 3030):
 """
 
 
+def send_data(data: dict, sock: socket):
+    json_data = json.dumps(data)
+    sock.sendall(bytes(json_data, encoding='utf-8'))
+
+
+def message_to_str(messages: List[Tuple[Union[str, None], str]]):
+    result = []
+    for message in messages:
+        if message[0] is None:
+            result.append(f'you: {message[1]}')
+        else:
+            result.append(f"{message[0]}: {message[1]}")
+    return result
+
+
 class Chat:
-    seen_messages: List[str]
-    unseen_messages: List[str]
+    seen_messages: List[Tuple[Union[str, None], str]]
+    unseen_messages: List[Tuple[str, str]]
+
+    def __init__(self):
+        self.seen_messages = []
+        self.unseen_messages = []
 
     def load_x_messages(self, messages_num: int):
         """
@@ -39,13 +59,15 @@ class Chat:
         :return:
         """
         if len(self.unseen_messages) > messages_num:
-            messages_to_send = self.unseen_messages[-messages_num:]
-            self.unseen_messages = self.unseen_messages[:-messages_num]
+            messages_to_send = self.unseen_messages[:messages_num]
+            self.unseen_messages = self.unseen_messages[messages_num:]
             self.seen_messages += messages_to_send
-            return messages_to_send
+
+            return message_to_str(messages_to_send)
         else:
             self.seen_messages += self.unseen_messages
-            return self.seen_messages[-messages_num:]
+            self.unseen_messages = []
+            return message_to_str(self.seen_messages[-messages_num:])
 
 
 class Inbox:
@@ -66,7 +88,7 @@ class Inbox:
             result[user] = len(self.chats_list[user].unseen_messages)
         return result
 
-    def add_message(self, message: str, username: str):
+    def add_message(self, username: str, message: str):
         """
         Adds a message to the chat.
         :param message:
@@ -76,10 +98,10 @@ class Inbox:
         self.chats_order.remove(username)
         self.chats_order.append(username)
         if username in self.chats_list:
-            self.chats_list[username].unseen_messages.append(message)
+            self.chats_list[username].unseen_messages.append((username, message))
         else:
             self.chats_list[username] = Chat()
-            self.chats_list[username].unseen_messages.append(message)
+            self.chats_list[username].unseen_messages.append((username, message))
 
     def add_read_message(self, username: str, message: str):
         """
@@ -88,7 +110,7 @@ class Inbox:
         :param username:
         :return:
         """
-        self.chats_list[username].seen_messages.append(message)
+        self.chats_list[username].seen_messages.append((username, message))
 
     def get_chat(self, username: str) -> Chat:
         """
@@ -101,6 +123,9 @@ class Inbox:
     def add_chat(self, username: str):
         self.chats_list[username] = Chat()
         self.chats_order.append(username)
+
+    def add_self_message(self, username: str, message: str):
+        self.chats_list[username].seen_messages.append((None, message))
 
 
 def threaded(fn):
@@ -117,9 +142,16 @@ class ChatServer:
 
     chat_socket: socket.socket
 
+    def get_user_socket(self, username: str):
+        return self.online_users[username][0]
+
+    def get_user_contact(self, username: str):
+        return self.online_users[username][1]
+
     def __init__(self):
         self.chat_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.chat_socket.bind((URL, SERVER_PORT_INFO))
+        print(f'Chat server started on {URL}:{SERVER_PORT_INFO}')
         self.chat_socket.listen()
         self.users = {}
         self.online_users = {}
@@ -160,18 +192,34 @@ class ChatServer:
                 self.inbox(message["username"], sock)
             elif message["command"] == "CHAT":
                 self.chat(message["username"], message["contact"], sock)
-
+            else:
+                data = {
+                    "status": "INTERNAL_SERVER_ERROR",
+                }
+                send_data(data, sock)
         except Exception as e:
-            sock.sendall(b"{status: UNKNOWN_COMMAND}")
+            data = {
+                "status": "INTERNAL_SERVER_ERROR",
+            }
+            send_data(data, sock)
 
     def chat(self, username: str, contact: str, sock: socket.socket):
         if username not in self.users:
-            sock.sendall(b"{status: NOT_REGISTERED}")
+            data = {
+                "status": "NOT_REGISTERED"
+            }
+            send_data(data, sock)
         else:
             if contact not in self.users_inbox[username].chats_list:
-                sock.sendall(b"{status: NO_CHAT}")
+                data = {
+                    "status": "NO_CHAT"
+                }
+                send_data(data, sock)
             else:
-                sock.sendall(b"{status: OK}")
+                data = {
+                    "status": "OK"
+                }
+                send_data(data, sock)
                 sock.settimeout(CHAT_TIMEOUT)
                 self.online_users[username] = (sock, contact)
                 self.handle_chat(username, contact, sock)
@@ -198,37 +246,64 @@ class ChatServer:
             del self.online_users[username]
 
     def messages(self, count: int, username: str, contact: str, sock: socket.socket):
-        sock.sendall(self.users_inbox[username].get_chat(contact).load_x_messages(count).encode())
+        sock.sendall(str(self.users_inbox[username].get_chat(contact).load_x_messages(count)).encode())
 
     def send(self, username: str, to: str, message: str, sock: socket.socket):
-        if self.online_users[username][1] != to:
-            sock.sendall(b"{status: CANT_SEND_MESSAGE_ON_DIFFERENT_CHATS}")
+
+        if self.get_user_contact(username) != to:
+            data = {
+                "status": "CANT_SEND_MESSAGE_ON_DIFFERENT_CHATS"
+            }
+            send_data(data, sock)
         else:
-            if to in self.online_users and self.online_users[to][1] == username:
-                self.online_users[to][0].sendall(b"{command: RECEIVE, message: " + message.encode() + b"}")
+            self.users_inbox[username].add_self_message(to, message)
+            if to in self.online_users and self.get_user_contact(to) == username:
+                data = {
+                    "command": "RECEIVE",
+                    "message": message
+                }
+                send_data(data, self.get_user_socket(to))
                 self.users_inbox[to].add_read_message(username, message)
             else:
                 self.users_inbox[to].add_message(username, message)
-                sock.sendall(b"{status: OK}")
-            sock.sendall(b"{status: OK}")
+                data = {
+                    "status": "OK"
+                }
+                send_data(data, sock)
+            data = {
+                "status": "OK"
+            }
+            send_data(data, sock)
 
     def login(self, username: str, password: str, sock: socket.socket):
         if username in self.users:
             if self.users[username] == password:
-                sock.sendall(b"{status: OK}")
+                data = {
+                    "status": "OK"
+                }
             else:
-                sock.sendall(b"{status: WRONG_PASSWORD}")
+                data = {
+                    "status": "WRONG_PASSWORD"
+                }
         else:
-            sock.sendall(b"{status: WRONG_USERNAME}")
+            data = {
+                "status": "WRONG_USERNAME"
+            }
+        send_data(data, sock)
 
     def register(self, username: str, password: str, sock: socket.socket):
         if username in self.users:
-            sock.sendall(b"{status: USERNAME_TAKEN}")
+            data = {
+                "status": "USERNAME_TAKEN"
+            }
         else:
-            self.users[username] = password
             self.add_user_to_other_inboxes(username)
-            self.users_inbox[username] = Inbox()
-            sock.sendall(b"{status: OK}")
+            self.add_other_inboxes_to_user(username)
+            self.users[username] = password
+            data = {
+                "status": "OK"
+            }
+        send_data(data, sock)
 
     def add_user_to_other_inboxes(self, username: str):
         for inbox in self.users_inbox.values():
@@ -236,19 +311,36 @@ class ChatServer:
 
     def inbox(self, username: str, sock: socket.socket):
         if username in self.users_inbox:
-            self.send_inbox(username, sock)
+            data = self.get_inbox_data(username)
         else:
-            sock.sendall(b"{status: UNKNOWN_USER}")
+            data = {
+                "status": "UNKNOWN_USER"
+            }
+        send_data(data, sock)
 
-    def send_inbox(self, username: str, sock: socket.socket):
+    def get_inbox_data(self, username: str):
         inbox = self.users_inbox[username]
-        sock.sendall(b"{status: OK, inbox: " + str(inbox.summarize_inbox()).encode() + b"}")
+        return {
+            "status": "OK",
+            "inbox": str(inbox.summarize_inbox())
+        }
 
     def send_user_available(self, username: str, sock: socket.socket):
         if username in self.users:
-            sock.sendall(b"{status: USER_TAKEN")
+            data = {
+                "status": "USER_TAKEN"
+            }
         else:
-            sock.sendall(b"{status: OK}")
+            data = {
+                "status": "OK"
+            }
+        send_data(data, sock)
+
+    def add_other_inboxes_to_user(self, username):
+        inbox = Inbox()
+        for user in self.users.keys():
+            inbox.add_chat(user)
+        self.users_inbox[username] = inbox
 
 
 ChatServer().start()
