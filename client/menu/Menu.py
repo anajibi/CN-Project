@@ -3,12 +3,14 @@ import socket
 from enum import Enum
 from typing import Dict
 
+from client.Firewall import Firewall
 
 
 class Menu:
     parent: any  # any: Menu
     sub_menus: Dict[str, any]  # any: Menu
     name: str
+    firewall: Firewall
 
     def __init__(self, parent, name):
         self.parent = parent
@@ -81,4 +83,3 @@ def tcp_send_data(data: dict, ip, port):
 class ServerType(Enum):
     STREAMING = "choghondar"
     CHAT = "shalgham"
-
