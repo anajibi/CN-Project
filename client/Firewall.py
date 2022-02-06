@@ -57,8 +57,8 @@ class Firewall:
 class ControlledSocket(socket):
     firewall: Firewall
 
-    def __init__(self, firewall, socket_val):
-        super().__init__()
+    def __init__(self, firewall: Firewall, family=-1, type=-1, proto=-1, fileno=None, ):
+        super(ControlledSocket, self).__init__(family, type, proto, fileno)
         self.firewall = firewall
 
     def sendto(self, data: bytes, address: any) -> int:
