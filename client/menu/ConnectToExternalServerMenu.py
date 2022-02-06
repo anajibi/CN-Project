@@ -12,6 +12,7 @@ class ConnectToExternalServerMenu(Menu):
     def show(self):
         print(f"{str(ServerType.STREAMING.value)}: {StreamingMenu(self)}")
         print(f"{str(ServerType.CHAT.value)}: {ChatMenu(self)}")
+        return self
 
     def execute(self):
         command = input()

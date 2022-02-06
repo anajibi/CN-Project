@@ -5,24 +5,25 @@ import socket
 import struct
 from datetime import time
 
-import cv2
 import numpy as np
 import pyaudio
+import cv2
 
 from client.Firewall import ControlledSocket
 from client.menu.Menu import Menu
+
 
 class StreamingMenu(Menu):
     publish_socket: ControlledSocket
     stream_socket: ControlledSocket
 
     def __init__(self, parent):
-        print("Welcome to Choghondar.")
         super().__init__(parent, "Streaming Menu")
         self.publish_socket = ControlledSocket(socket.AF_INET, socket.SOCK_STREAM)
         self.stream_socket = ControlledSocket(socket.AF_INET, socket.SOCK_STREAM)
 
     def show(self):
+        print("Welcome to Choghondar.")
         BUFF_SIZE = 65536
 
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

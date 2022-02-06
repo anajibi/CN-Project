@@ -4,6 +4,7 @@ import socket
 
 from client.Firewall import Firewall
 from client.menu.ChatMenu import ChatMenu
+from client.menu.MainMenu import MainMenu
 
 
 def udp_send_data(data: dict):
@@ -11,12 +12,13 @@ def udp_send_data(data: dict):
 
 
 class Client:
+
     admin_pass: str
     firewall: Firewall
 
     def __init__(self):
-        # MainMenu(None).run()
-        ChatMenu(None).run()
+        MainMenu(None).run()
+        # ChatMenu(None).run()
 
 
 client: Client = Client()
