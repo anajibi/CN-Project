@@ -10,6 +10,7 @@ URL = "localhost"
 PROTOCOL (Port 3030):
 
     Request: 
+        { command: GET_USER, username: <username> } -> { status: OK | USER_TAKEN }
         { command: LOGIN, username: <username>, password: <password> } -> { status: <status> } This connection will be closed after receiving the response
         { command: REGISTER, username: <username>, password: <password> } -> { status: <status> } This connection will be closed after receiving the response
         { command: INBOX, username: <username> } -> { status: <status> ,Dict[str, number] } --- This connection will be closed after receiving the response
@@ -97,6 +98,10 @@ class Inbox:
         """
         return self.chats_list[username]
 
+    def add_chat(self, username: str):
+        self.chats_list[username] = Chat()
+        self.chats_order.append(username)
+
 
 def threaded(fn):
     def wrapper(*args, **kwargs):
@@ -145,6 +150,8 @@ class ChatServer:
     def handle_message(self, data, sock, addr):
         try:
             message = eval(data.decode())
+            if message["command"] == "GET_USER":
+                self.send_user_available(message["username"], sock)
             if message["command"] == "LOGIN":
                 self.login(message["username"], message["password"], sock)
             elif message["command"] == "REGISTER":
@@ -219,8 +226,13 @@ class ChatServer:
             sock.sendall(b"{status: USERNAME_TAKEN}")
         else:
             self.users[username] = password
+            self.add_user_to_other_inboxes(username)
             self.users_inbox[username] = Inbox()
             sock.sendall(b"{status: OK}")
+
+    def add_user_to_other_inboxes(self, username: str):
+        for inbox in self.users_inbox.values():
+            inbox.add_chat(username)
 
     def inbox(self, username: str, sock: socket.socket):
         if username in self.users_inbox:
@@ -231,6 +243,12 @@ class ChatServer:
     def send_inbox(self, username: str, sock: socket.socket):
         inbox = self.users_inbox[username]
         sock.sendall(b"{status: OK, inbox: " + str(inbox.summarize_inbox()).encode() + b"}")
+
+    def send_user_available(self, username: str, sock: socket.socket):
+        if username in self.users:
+            sock.sendall(b"{status: USER_TAKEN")
+        else:
+            sock.sendall(b"{status: OK}")
 
 
 ChatServer().start()
