@@ -59,8 +59,8 @@ class Chat:
         :return:
         """
         if len(self.unseen_messages) > messages_num:
-            messages_to_send = self.unseen_messages[-messages_num:]
-            self.unseen_messages = self.unseen_messages[:-messages_num]
+            messages_to_send = self.unseen_messages[:messages_num]
+            self.unseen_messages = self.unseen_messages[messages_num:]
             self.seen_messages += messages_to_send
 
             return message_to_str(messages_to_send)
@@ -88,7 +88,7 @@ class Inbox:
             result[user] = len(self.chats_list[user].unseen_messages)
         return result
 
-    def add_message(self, message: str, username: str):
+    def add_message(self, username: str, message: str):
         """
         Adds a message to the chat.
         :param message:
