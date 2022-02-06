@@ -87,7 +87,7 @@ class ControlledSocket(socket):
             print("packet dropped due to firewall rules")
             return None
 
-    def send(self, data: bytes, flags: int = ...) -> int:
+    def sendall(self, data: bytes, flags: int = ...) -> None:
         """
         Use this function to check whether firewall should be used.
         :param data:
@@ -95,7 +95,7 @@ class ControlledSocket(socket):
         :return:
         """
         if self.firewall.can_go_through(self.getsockname()[1]):
-            return super(ControlledSocket, self).send(data, flags)
+            return super(ControlledSocket, self).sendall(data, flags)
         else:
             print("packet dropped due to firewall rules")
             return -1
