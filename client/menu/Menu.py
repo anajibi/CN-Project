@@ -16,6 +16,10 @@ class Menu:
         self.parent = parent
         self.name = name
         self.sub_menus = {}
+        self.proxy_port = -1
+        self.chat_port = 3030
+        self.streaming_info_port = 4030
+        self.streaming_port = 4031
 
     def run(self):
         return self.show().execute()
@@ -68,8 +72,24 @@ class Menu:
         print("Bad input. Try again.")
         return self.run()
 
+    def get_chat_port(self):
+        if self.proxy_port == -1:
+            return self.chat_port
+        return self.proxy_port
+
+    def get_streaming_info_port(self):
+        if self.proxy_port == -1:
+            return self.streaming_info_port
+        return self.proxy_port
+
+    def get_streaming_port(self):
+        if self.proxy_port == -1:
+            return self.streaming_port
+        return self.proxy_port
+
     def __str__(self):
         return self.name
+
 
 def tcp_send_data(data: dict, ip, port):
     data = json.dumps(data)
@@ -79,6 +99,7 @@ def tcp_send_data(data: dict, ip, port):
         message = s.recv(1024).decode('utf-8')
         response = json.loads(message)
     return response
+
 
 class ServerType(Enum):
     STREAMING = "choghondar"
