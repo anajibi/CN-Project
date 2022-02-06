@@ -3,6 +3,7 @@ import json
 import socket
 
 from Firewall import Firewall, FirewallType, ControlledSocket
+from menu.ChatMenu import ChatMenu
 from menu.MainMenu import MainMenu
 
 ControlledSocket.firewall = Firewall(FirewallType.BLACK_LIST)

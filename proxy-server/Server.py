@@ -4,8 +4,8 @@ import threading
 from enum import Enum
 from typing import Dict, Tuple
 
-CHAT_PORT = 6060
-STREAMING_PORT = 6070
+CHAT_PORT = 8080
+STREAMING_PORT = 8088
 
 # ChatServer
 CHAT_SERVER_PORT = 3030
@@ -43,13 +43,15 @@ class ProxyServer:
         self.accept_and_forward_tcp(self.chat, CHAT_SERVER_PORT)
         self.accept_and_forward_tcp(self.media_tcp, MEDIA_SERVER_PORT)
         self.accept_and_forward_udp()
+        print("started")
 
     @threaded
-    def accept_and_forward_tcp(self, sock: socket.socket, target_port: int, target_sock_type: SockType):
+    def accept_and_forward_tcp(self, sock: socket.socket, target_port: int):
         try:
             while True:
                 client, addr = sock.accept()
-                self.handle_client(client, target_port, target_sock_type)
+                print("accepted address: ", addr)
+                self.handle_client(client, target_port)
         except Exception as e:
             sock.close()
 
@@ -159,3 +161,5 @@ class ProxyServer:
     # @threaded
     # def handle_media_udp(self, media_udp_socket: socket):
     #     pass
+
+ProxyServer()

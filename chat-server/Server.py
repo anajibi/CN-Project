@@ -194,7 +194,7 @@ class ChatServer:
                 self.chat(message["username"], message["contact"], sock)
             else:
                 data = {
-                    "status": "INTERNAL_SERVER_ERROR",
+                    "status": "UNKNOWN_COMMAND",
                 }
                 send_data(data, sock)
         except Exception as e:
