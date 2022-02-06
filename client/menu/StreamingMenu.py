@@ -9,24 +9,24 @@ import numpy as np
 import pyaudio
 import cv2
 
-# from Firewall import ControlledSocket
+from Firewall import ControlledSocket
 from menu.Menu import Menu
 
 
 class StreamingMenu(Menu):
-    publish_socket: socket.socket
-    stream_socket: socket.socket
+    publish_socket: ControlledSocket
+    stream_socket: ControlledSocket
 
     def __init__(self, parent):
         super().__init__(parent, "Streaming Menu")
-        self.publish_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.stream_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.publish_socket = ControlledSocket(socket.AF_INET, socket.SOCK_STREAM)
+        self.stream_socket = ControlledSocket(socket.AF_INET, socket.SOCK_STREAM)
 
     def show(self):
         print("Welcome to Choghondar.")
         BUFF_SIZE = 65536
 
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        client_socket = ControlledSocket(socket.AF_INET, socket.SOCK_DGRAM)
         client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
         client_socket.settimeout(1)
         host_ip = 'localhost'
@@ -75,7 +75,7 @@ class StreamingMenu(Menu):
                             frames_per_buffer=CHUNK)
                             
             # create socket
-            client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+            client_socket = ControlledSocket(socket.AF_INET,socket.SOCK_STREAM)
             socket_address = (host_ip,self.get_streaming_port())
             print('server listening at',socket_address)
             client_socket.connect(socket_address) 
