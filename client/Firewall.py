@@ -57,10 +57,6 @@ class Firewall:
 class ControlledSocket(socket):
     firewall: Firewall
 
-    def __init__(self, firewall: Firewall, family=-1, type=-1, proto=-1, fileno=None, ):
-        super(ControlledSocket, self).__init__(family, type, proto, fileno)
-        self.firewall = firewall
-
     def sendto(self, data: bytes, address: any) -> int:
         """
         Use this function to check whether firewall should be used.
@@ -99,3 +95,5 @@ class ControlledSocket(socket):
         else:
             print("packet dropped due to firewall rules")
             return -1
+
+
