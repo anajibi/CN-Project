@@ -64,7 +64,7 @@ class ControlledSocket(socket):
         :param address:
         :return:
         """
-        if self.firewall.can_go_through(address[1]):
+        if ControlledSocket.firewall.can_go_through(address[1]):
             return super().sendto(data, address)
         else:
             print("packet dropped due to firewall rules")
@@ -77,7 +77,7 @@ class ControlledSocket(socket):
         :param flags:
         :return:
         """
-        if self.firewall.can_go_through(self.getsockname()[1]):
+        if ControlledSocket.firewall.can_go_through(self.getsockname()[1]):
             return super(ControlledSocket, self).recv(bufsize, flags)
         else:
             print("packet dropped due to firewall rules")
@@ -90,7 +90,7 @@ class ControlledSocket(socket):
         :param flags:
         :return:
         """
-        if self.firewall.can_go_through(self.getsockname()[1]):
+        if ControlledSocket.firewall.can_go_through(self.getsockname()[1]):
             return super(ControlledSocket, self).sendall(data, flags)
         else:
             print("packet dropped due to firewall rules")
