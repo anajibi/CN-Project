@@ -136,7 +136,9 @@ class MediaServer:
             print('udp socket')
             conn, _ = self.online_audio_delivery.accept()
             print('tcp socket')
-            threading.Thread(target=self.send_stream, args=(msg.decode('ascii'), conn, addr)).start()
+            n = os.fork()
+            if n == 0:
+                threading.Thread(target=self.send_stream, args=(msg.decode('ascii'), conn, addr)).start()
 
     def start(self):
         """
