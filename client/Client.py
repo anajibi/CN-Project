@@ -1,4 +1,6 @@
 from enum import Enum
+import json
+import socket
 from typing import Dict, List
 
 from client.Firewall import Firewall
@@ -13,15 +15,16 @@ class Menu:
     parent: any  # any: Menu
     sub_menus: Dict[str, any]  # any: Menu
     name: str
-    leaf: bool
+    is_leaf: bool
 
     def __init__(self, parent, name, is_leaf=False):
         self.parent = parent
         self.name = name
-        self.leaf = is_leaf
+        self.is_leaf = is_leaf
+        self.sub_menus = {}
 
     def run(self):
-        if self.leaf:
+        if self.is_leaf:
             return
         return self.show().execute()
 
@@ -105,6 +108,9 @@ class StreamingMenu(Menu):
         super().__init__(parent, "Streaming Menu", is_leaf=True)
         # self.get_video_names()
 
+    def show(self):
+        print()
+
 
 class ChatMenu(Menu):
     def __init__(self, parent):
@@ -141,7 +147,16 @@ class SignUpMenu(Menu):
         self.send_user_pass_to_server()
 
     def is_username_in_server(self):
-        pass
+        message = {
+            'command': 'GET_USER',
+            'username': self.username
+        }
+        data = json.dumps(message)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect(('localhost', 3030))
+            s.sendall(bytes(data, encoding='utf-8'))
+            response = (s.recv(1024).decode('utf-8'))
+        print(response)
 
     def is_username_bad(self):
         return self.is_username_in_server() or self.username == '0'
