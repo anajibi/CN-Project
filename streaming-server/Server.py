@@ -1,5 +1,3 @@
-from email import message
-from unicodedata import name
 import numpy as np
 import cv2, imutils, socket, time, base64, threading, wave, pyaudio, pickle, struct, sys, os, queue
 from concurrent.futures import ThreadPoolExecutor
@@ -138,7 +136,7 @@ class MediaServer:
             print('tcp socket')
             n = os.fork()
             if n == 0:
-                threading.Thread(target=self.send_stream, args=(msg.decode('ascii'), conn, addr)).start()
+                self.send_stream(msg.decode('ascii'), conn, addr)
 
     def start(self):
         """

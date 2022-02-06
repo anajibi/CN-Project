@@ -12,7 +12,7 @@ host_name = socket.gethostname()
 host_ip = '127.0.0.1'
 print(host_ip)
 port = 4031
-message = b'behdad babaei'
+message = b'mahmooti'
 client_socket.sendto(message,(host_ip,port))
 
 
