@@ -1,8 +1,13 @@
+from audioop import add
 import socket
+from statistics import median
 from typing import Dict
 import threading
 
+import cv2, pickle, struct
+
 SERVER_PORT_INFO = 4030
+SERVER_STREAM_PORT = 4031
 
 URL = "localhost"
 
@@ -17,16 +22,13 @@ PROTOCOL (Port 4030):
         UDP: ByteStream
 """
 
-
-def threaded(fn):
-    def wrapper(*args, **kwargs):
-        threading.Thread(target=fn, args=args, kwargs=kwargs).start()
-
-    return wrapper
-
-
 class MediaServer:
-    media: Dict[str, str]
+    # media: Dict[str, str]
+    media = {
+        'behdad babaei' : '1.mp4',
+        'hossein alizade' : '2.mp4',
+        'keyhan kalhor' : '3.mp4'
+    }
 
     publish: socket.socket
     online_delivery: socket.socket
@@ -35,40 +37,55 @@ class MediaServer:
         self.publish = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.publish.bind((URL, SERVER_PORT_INFO))
         self.publish.listen()
-        self.online_delivery = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.online_delivery.bind((URL, SERVER_PORT_INFO))
+        self.online_delivery = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.online_delivery.bind((URL, SERVER_STREAM_PORT))
         self.online_delivery.listen()
 
-    @threaded
+    def send_stream(self, conn):
+        name = conn.recv(1024).decode('ascii')
+        print(f'name of media : {name}')
+        with conn:
+            try:
+                vid = cv2.VideoCapture(self.media[name])
+                while vid.isOpened():
+                    ret, frame = vid.read()
+                    serialized_frame = pickle.dumps(frame)
+                    header = struct.pack('Q', len(serialized_frame))
+                    data = header + serialized_frame
+                    conn.sendall(data)
+                    cv2.imshow('sending', frame)
+                    key = cv2.waitKey(25)
+            except ConnectionResetError:
+                vid.release()
+                cv2.destroyAllWindows()
+
+
+    def media_list(self):
+        list = ''
+        for item in self.media.keys():
+            list += item
+            list += '\n'
+        return list
+
     def acc_publish(self):
-        pass
+        while True:
+            conn, addr = self.publish.accept()
+            print('publish connection : {addr}')
+            with conn:
+                conn.sendall(self.media_list().encode('ascii'))
 
-    @threaded
     def acc_online_delivery(self):
-        pass
-
-    def send_video_names(self, socket_val: socket, addr: str):
-        """
-        For publish socket.
-        :param socket_val:
-        :param addr:
-        :return:
-        """
-        pass
+        while True:
+            conn, addr = self.online_delivery.accept()
+            print('online delivery connection : {addr}')
+            threading.Thread(target=self.send_stream, args=(conn, )).start()
 
     def start(self):
         """
         calls online_delivery UDP service.
         :return:
         """
-        self.acc_publish()
-        self.acc_online_delivery()
-
-    def send_stream(self, client):
-        pass
-
-    def end_stream(self, client):
-        pass
-
+        threading.Thread(target=self.acc_publish, args=()).start()
+        threading.Thread(target=self.acc_online_delivery, args=()).start()
 
 MediaServer().start()
