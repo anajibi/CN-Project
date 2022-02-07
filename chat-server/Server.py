@@ -258,11 +258,12 @@ class ChatServer:
         else:
             self.users_inbox[username].add_self_message(to, message)
             if to in self.online_users and self.get_user_contact(to) == username:
-                data = {
-                    "command": "RECEIVE",
-                    "message": message
-                }
-                send_data(data, self.get_user_socket(to))
+                
+                # data = {
+                #     "command": "RECEIVE",
+                #     "message": message
+                # }
+                # send_data(data, self.get_user_socket(to))
                 self.users_inbox[to].add_read_message(username, message)
             else:
                 self.users_inbox[to].add_message(username, message)
@@ -322,7 +323,7 @@ class ChatServer:
         inbox = self.users_inbox[username]
         return {
             "status": "OK",
-            "inbox": str(inbox.summarize_inbox())
+            "inbox": json.dumps(inbox.summarize_inbox(), sort_keys=True, indent=1)
         }
 
     def send_user_available(self, username: str, sock: socket.socket):

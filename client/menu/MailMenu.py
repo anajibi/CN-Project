@@ -1,13 +1,23 @@
 import json
 import re
 import socket
+import threading
+from typing import List
 
 from Firewall import ControlledSocket
 from menu.Menu import Menu, tcp_send_data
 
 
+def threaded(fn):
+    def wrapper(*args, **kwargs):
+        threading.Thread(target=fn, args=args, kwargs=kwargs).start()
+
+    return wrapper
+
+
 class MailMenu(Menu):
     inbox: str
+    messages: List[str]
 
     def __init__(self, parent):
         super().__init__(parent, "Mail Menu")
@@ -36,6 +46,14 @@ class MailMenu(Menu):
                 self.chat_with(contact)
                 self.show()
 
+    def pretty(self, d, indent=0):
+        for key, value in d.items():
+            print('\t' * indent + str(key))
+            if isinstance(value, dict):
+                self.pretty(value, indent+1)
+            else:
+                print('\t' * (indent+1) + str(value))
+
     def chat_with(self, contact: str):
         username = self.parent.username
         data = {
@@ -58,9 +76,11 @@ class MailMenu(Menu):
     def is_pm_shortcut(pm):
         return pm.startswith('/')
 
-    def start_talking(self, contact: str, s: socket.socket):
+    def start_talking(self, contact: str, s: ControlledSocket):
         username = self.parent.username
-        print(self.get_messages(5, s))
+        data = eval(self.get_messages(5, s))
+        for line in data:
+            print(line)
         while True:
             pm = input(f"{username}: ")
             if self.is_pm_shortcut(pm):
@@ -68,8 +88,9 @@ class MailMenu(Menu):
                     break
                 if regexp := re.match(r"/load (\d+)", pm):
                     count = int(regexp.group(1))
-                    data = self.get_messages(count, s)
-                    print(data)
+                    data = eval(self.get_messages(count, s))
+                    for line in data:
+                        print(line)
             else:
                 data = {
                     "command": "SEND",
@@ -78,10 +99,10 @@ class MailMenu(Menu):
                 }
                 data = json.dumps(data)
                 s.sendall(bytes(data, encoding='utf-8'))
-                s.recv(1024)
+                response = s.recv(1024).decode('utf-8')
 
     @staticmethod
-    def get_messages(count: int, s: socket.socket):
+    def get_messages(count: int, s: ControlledSocket):
         data = {
             "command": "MESSAGES",
             "count": count

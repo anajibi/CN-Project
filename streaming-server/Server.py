@@ -1,7 +1,7 @@
+import multiprocessing
 import numpy as np
 import cv2, imutils, socket, time, base64, threading, wave, pyaudio, pickle, struct, sys, os, queue
 from concurrent.futures import ThreadPoolExecutor
-
 
 SERVER_PORT_INFO = 4030
 SERVER_STREAM_PORT = 4031
@@ -23,14 +23,14 @@ PROTOCOL (Port 4030):
 class MediaServer:
     # media: Dict[str, str]
     media = {
-        'behdad babaei' : '1.mp4',
-        'mahmooti' : '2.mp4',
-        'keyhan kalhor' : '3.mp4'
+        'behdad babaei': '1.mp4',
+        'mahmooti': '2.mp4',
+        'keyhan kalhor': '3.mp4'
     }
 
     audio = {
-        'behdad babaei' : '1.wav',
-        'mahmooti' : '2.wav'
+        'behdad babaei': '1.wav',
+        'mahmooti': '2.wav'
     }
 
     publish: socket.socket
@@ -39,13 +39,13 @@ class MediaServer:
     def __init__(self):
         self.publish = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.publish.bind((URL, SERVER_PORT_INFO))
+        print(f'Streaming Info server started on {URL}:{SERVER_PORT_INFO}')
         self.publish.listen()
         self.online_video_delivery = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.online_video_delivery.bind((URL, SERVER_STREAM_PORT))
         self.online_audio_delivery = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.online_audio_delivery.bind((URL, SERVER_STREAM_PORT))
         self.online_audio_delivery.listen()
-
 
     def video_stream_gen(self, vid, q):
         print('video_stream_gen')
@@ -70,7 +70,8 @@ class MediaServer:
             encoded, buffer = cv2.imencode('.jpeg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
             message = base64.b64encode(buffer)
             self.online_video_delivery.sendto(message, client_addr)
-            frame = cv2.putText(frame, 'FPS: ' + str(round(fps, 1)), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            frame = cv2.putText(frame, 'FPS: ' + str(round(fps, 1)), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
+                                (0, 0, 255), 2)
             if cnt == frames_to_count:
                 try:
                     fps = frames_to_count / (time.time() - st)
@@ -95,7 +96,8 @@ class MediaServer:
         CHUNK = 1024
         wf = wave.open(self.audio[name], 'rb')
         p = pyaudio.PyAudio()
-        stream = p.open(format=p.get_format_from_width(wf.getsampwidth()), channels=wf.getnchannels(), rate=wf.getframerate(), input=True, frames_per_buffer=CHUNK)
+        stream = p.open(format=p.get_format_from_width(wf.getsampwidth()), channels=wf.getnchannels(),
+                        rate=wf.getframerate(), input=True, frames_per_buffer=CHUNK)
         if client_socket:
             while True:
                 data = wf.readframes(CHUNK)
@@ -103,16 +105,15 @@ class MediaServer:
                 message = struct.pack('Q', len(serialized)) + serialized
                 client_socket.sendall(message)
 
-
     def send_stream(self, name, conn, client_addr):
         print('send_stream')
         q = queue.Queue(maxsize=10)
         vid = cv2.VideoCapture(self.media[name])
         FPS = vid.get(cv2.CAP_PROP_FPS)
         with ThreadPoolExecutor(max_workers=3) as executor:
-                    executor.submit(self.video_stream_gen, vid,q)
-                    executor.submit(self.video_stream, client_addr, FPS, q)
-                    executor.submit(self.audio_stream, name, conn)
+            executor.submit(self.video_stream_gen, vid, q)
+            executor.submit(self.video_stream, client_addr, FPS, q)
+            executor.submit(self.audio_stream, name, conn)
 
     def media_list(self):
         list = ''
@@ -120,11 +121,11 @@ class MediaServer:
             list += item
             list += '\n'
         return list
-        
+
     def acc_publish(self):
         while True:
             conn, addr = self.publish.accept()
-            print('publish connection : {addr}')
+            print(f'publish connection : {addr}')
             with conn:
                 conn.sendall(self.media_list().encode('ascii'))
 
@@ -134,9 +135,12 @@ class MediaServer:
             print('udp socket')
             conn, _ = self.online_audio_delivery.accept()
             print('tcp socket')
-            n = os.fork()
-            if n == 0:
-                self.send_stream(msg.decode('ascii'), conn, addr)
+            p = multiprocessing.Process(target=self.send_stream, args=(msg.decode('ascii'), conn, addr))
+            p.daemon = True
+            p.start()
+            # n = os.fork()
+            # if n == 0:
+                # self.send_stream(msg.decode('ascii'), conn, addr)
 
     def start(self):
         """
